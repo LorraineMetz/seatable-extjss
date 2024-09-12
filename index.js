@@ -1,18 +1,15 @@
 // 请将本文件内代码置入seatable脚本开头
 
-async function loadExtensions() {
+await new Promise(res => {
+  v='1.0.0';
   if (window.extjss) {
-    return res();
+    res();
+  } else {
+    d = document;
+    s = d.createElement("script");
+    s.src =
+      'https://cdn.jsdelivr.net/gh/LorraineMetz/seatable-extjss@v'+v+'/extjss.min.js';
+    s.onload = res;
+    d.body.appendChild(s);
   }
-
-  return new Promise((res, rej) => {
-    let script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/gh/LorraineMetz/seatable-extjss/extjss.min.js";
-    script.onload = () => {
-      res();
-    };
-    document.body.appendChild(script);
-  });
-}
-
-await loadExtensions();
+});
