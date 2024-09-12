@@ -1,3 +1,5 @@
+const LIB_VERSION = "1.0.4";
+
 declare namespace Types {
     export type RowFilterFunction = (row: object) => boolean;
     export type RowsFilterFunction = (row: object, rows: Array<object>) => Array<object>;
@@ -16,7 +18,6 @@ declare namespace Types {
     }
 
     window['extjss'] = function () {
-        const LIB_VERSION = "1.0.3";
         console.warn(`extjss v${LIB_VERSION} loaded`);
     };
 
@@ -244,7 +245,11 @@ declare namespace Types {
             if (view_name) {
                 this.obj = base.getViewByName(table.name, view_name);
             } else {
-                this.obj = base.getActiveView();
+                if (table.name != base.getActiveTable().name) {
+                    this.obj = base.getViews(table.name)[0];
+                }else {
+                    this.obj = base.getActiveView();
+                }
             }
             this.name = this.obj.name;
         }

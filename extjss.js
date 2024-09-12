@@ -1,3 +1,4 @@
+var LIB_VERSION = "1.0.4";
 (function () {
     var base = window['base'];
     var app = window['app'];
@@ -6,7 +7,6 @@
         throw new Error(errMsg);
     }
     window['extjss'] = function () {
-        var LIB_VERSION = "1.0.3";
         console.warn("extjss v".concat(LIB_VERSION, " loaded"));
     };
     function table(table_name) {
@@ -212,7 +212,12 @@
                 this.obj = base.getViewByName(table.name, view_name);
             }
             else {
-                this.obj = base.getActiveView();
+                if (table.name != base.getActiveTable().name) {
+                    this.obj = base.getViews(table.name)[0];
+                }
+                else {
+                    this.obj = base.getActiveView();
+                }
             }
             this.name = this.obj.name;
         }
