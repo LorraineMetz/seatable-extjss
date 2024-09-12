@@ -7,7 +7,7 @@ async function loadExtensions() {
 
   return new Promise((res, rej) => {
     let script = document.createElement("script");
-    script.src = "URL_ADDRESS";
+    script.src = "https://cdn.jsdelivr.net/gh/LorraineMetz/seatable-extjss/extjss.min.js";
     script.onload = () => {
       res();
     };
