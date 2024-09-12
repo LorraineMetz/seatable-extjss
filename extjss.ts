@@ -15,41 +15,35 @@ declare namespace Types {
         throw new Error(errMsg);
     }
 
-    function inject(func: Function): void {
-        const name = func['name'];
-        window[name] = func;
-    }
-
-    function extjss() {
-        const LIB_VERSION = "1.0.2";
+    window['extjss'] = function () {
+        const LIB_VERSION = "1.0.3";
         console.warn(`extjss v${LIB_VERSION} loaded`);
-    }
-    inject(extjss);
+    };
 
     function table(table_name: string | undefined = undefined): Table {
         return new Table(table_name);
     }
-    inject(table);
+    window['table'] = table;
 
     function view(view_name: string | undefined = undefined): View {
         return new View(table(), view_name);
     }
-    inject(view);
+    window['view'] = view;
 
     function rows(filter: Types.RowFilterFunction | string | Array<string> | undefined = undefined): RowsFilter {
         return new RowsFilter(view(), filter);
     }
-    inject(rows);
+    window['rows'] = rows;
 
     function row() {
         return new Row();
     }
-    inject(row);
+    window['row'] = row;
 
     function column(column_name: string): ColumnModifier {
         return new ColumnModifier(rows(), column_name);
     }
-    inject(column);
+    window['column'] = column;
 
 
 
@@ -84,9 +78,9 @@ declare namespace Types {
             base.modifyRows(this.rowsFilter.table.name, selectedRows, updateRows);
         }
 
-        public ref(raw_filter: Types.RowsFilterFunction, func:Types.ColumnRefModifyFunction, 
+        public ref(raw_filter: Types.RowsFilterFunction, func: Types.ColumnRefModifyFunction,
             operation: "last" | "first" | undefined = undefined,
-            sourceTableName : string|undefined = undefined) : void {
+            sourceTableName: string | undefined = undefined): void {
             if (!sourceTableName) {
                 sourceTableName = this.rowsFilter.table.name;
             }
@@ -96,11 +90,11 @@ declare namespace Types {
             }
             const sourceRows = sourceTable.rows.map(r => base.getRowById(sourceTableName, r['_id']))
 
-            this.exec(r=> {
+            this.exec(r => {
                 var results = raw_filter(r, sourceRows);
                 if (operation == "last") {
                     return func(r, results[results.length - 1]);
-                }else {
+                } else {
                     return func(r, results[0]);
                 }
             });

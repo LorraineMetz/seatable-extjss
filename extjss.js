@@ -5,38 +5,33 @@
         alert(errMsg);
         throw new Error(errMsg);
     }
-    function inject(func) {
-        var name = func['name'];
-        window[name] = func;
-    }
-    function extjss() {
-        var LIB_VERSION = "1.0.2";
+    window['extjss'] = function () {
+        var LIB_VERSION = "1.0.3";
         console.warn("extjss v".concat(LIB_VERSION, " loaded"));
-    }
-    inject(extjss);
+    };
     function table(table_name) {
         if (table_name === void 0) { table_name = undefined; }
         return new Table(table_name);
     }
-    inject(table);
+    window['table'] = table;
     function view(view_name) {
         if (view_name === void 0) { view_name = undefined; }
         return new View(table(), view_name);
     }
-    inject(view);
+    window['view'] = view;
     function rows(filter) {
         if (filter === void 0) { filter = undefined; }
         return new RowsFilter(view(), filter);
     }
-    inject(rows);
+    window['rows'] = rows;
     function row() {
         return new Row();
     }
-    inject(row);
+    window['row'] = row;
     function column(column_name) {
         return new ColumnModifier(rows(), column_name);
     }
-    inject(column);
+    window['column'] = column;
     var ColumnModifier = /** @class */ (function () {
         function ColumnModifier(rows_filter, column_name) {
             this.rowsFilter = rows_filter;
