@@ -1,4 +1,4 @@
-var LIB_VERSION = "1.0.4";
+var LIB_VERSION = "1.0.5";
 (function () {
     var base = window['base'];
     var app = window['app'];
@@ -123,6 +123,98 @@ var LIB_VERSION = "1.0.4";
         };
         return ColumnModifier;
     }());
+    var RowSynchronizer = /** @class */ (function () {
+        function RowSynchronizer(rows_filter) {
+            this.rowsFilter = rows_filter;
+        }
+        RowSynchronizer.prototype.exec = function (index_column, map_key, sync_method, delete_extra_rows, match_func) {
+            if (delete_extra_rows === void 0) { delete_extra_rows = 0; }
+            if (match_func === void 0) { match_func = undefined; }
+            var sourceTableName = this.rowsFilter.table.name;
+            var sourceIndexName = index_column;
+            var maps = map_key.split('/');
+            if (maps.length <= 1) {
+                return die("同步仅发生在两个不同的表格，请指定目标表格");
+            }
+            var destTableName = maps[0];
+            var destIndexName = maps[1];
+            var sourceTable = base.getTableByName(sourceTableName);
+            if (!sourceTable) {
+                die("\u8868\u3010".concat(sourceTableName, "\u3011\u4E0D\u5B58\u5728"));
+            }
+            var destTable = base.getTableByName(destTableName);
+            if (!destTable) {
+                die("\u8868\u3010".concat(destTableName, "\u3011\u4E0D\u5B58\u5728"));
+            }
+            var sourceRows = this.rowsFilter.rows;
+            var destRows = destTable.rows.map(function (r) { return base.getRowById(destTableName, r['_id']); });
+            var addingRows = [];
+            var updatingOldRows = [];
+            var updatingRows = [];
+            var deletingRows = [];
+            if (delete_extra_rows == 1) {
+                destRows.forEach(function (drow) {
+                    var srow = sourceRows.filter(function (r) { return r[sourceIndexName] == drow[destIndexName]; });
+                    if (srow.length == 0) {
+                        deletingRows.push(drow);
+                    }
+                });
+            }
+            var sync_func;
+            if (typeof sync_method == 'string') {
+                var pairs = sync_method.split(';').map(function (a) {
+                    var kv = a.split(':');
+                    if (kv.length > 1) {
+                        return kv;
+                    }
+                    return [a, a];
+                });
+                sync_func = function (srow, type, drow) {
+                    var newrow = {};
+                    pairs.forEach(function (kv) {
+                        newrow[kv[1]] = srow[kv[0]];
+                    });
+                    console.log(srow, newrow);
+                    return newrow;
+                };
+            }
+            else {
+                sync_func = sync_method;
+            }
+            sourceRows.forEach(function (srow) {
+                var drows = destRows.filter(function (d) { return d[destIndexName] == srow[sourceIndexName]; });
+                if (drows.length > 0) {
+                    var drow = drows[0];
+                    if (match_func) {
+                        if (!match_func(srow, drow)) {
+                            return;
+                        }
+                    }
+                    updatingOldRows.push(drow);
+                    updatingRows.push(sync_func(srow, 'update', drow));
+                }
+                else {
+                    var newrow = sync_func(srow, 'add', undefined);
+                    newrow[destIndexName] = srow[sourceIndexName];
+                    addingRows.push(newrow);
+                }
+            });
+            if (!confirm("\u672C\u6B21\u540C\u6B65\u5171\u6D89\u53CA\u5230 ".concat(addingRows.length, " \u6761\u65B0\u589E\u3001").concat(updatingRows.length, " \u6761\u66F4\u65B0\u3001").concat(deletingRows.length, " \u6761\u5220\u9664\u64CD\u4F5C\uFF0C\u662F\u5426\u7EE7\u7EED\uFF1F"))) {
+                return alert("同步已取消");
+            }
+            if (deletingRows.length > 0) {
+                deletingRows.map(function (r) { return r['_id']; }).forEach(function (id) { return base.deleteRow(destTableName, id); });
+            }
+            if (addingRows.length > 0) {
+                addingRows.forEach(function (r) { return base.addRow(destTableName, r); });
+            }
+            if (updatingRows.length > 0) {
+                base.modifyRows(destTableName, updatingOldRows, updatingRows);
+            }
+            alert('同步完成');
+        };
+        return RowSynchronizer;
+    }());
     var RowsFilter = /** @class */ (function () {
         function RowsFilter(view, row_filter) {
             if (row_filter === void 0) { row_filter = undefined; }
@@ -184,6 +276,11 @@ var LIB_VERSION = "1.0.4";
                     console.log(r);
                 });
             }
+        };
+        RowsFilter.prototype.sync = function (index_column, map_key, sync_method, delete_extra_rows, match_func) {
+            if (delete_extra_rows === void 0) { delete_extra_rows = 0; }
+            if (match_func === void 0) { match_func = undefined; }
+            return new RowSynchronizer(this).exec(index_column, map_key, sync_method, delete_extra_rows, match_func);
         };
         return RowsFilter;
     }());

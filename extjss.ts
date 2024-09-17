@@ -1,10 +1,12 @@
-const LIB_VERSION = "1.0.4";
+const LIB_VERSION = "1.0.5";
 
 declare namespace Types {
     export type RowFilterFunction = (row: object) => boolean;
     export type RowsFilterFunction = (row: object, rows: Array<object>) => Array<object>;
     export type ColumnModifyFunction = (row: object) => any;
     export type ColumnRefModifyFunction = (row: object, ds: object) => any;
+    export type RowSyncMatchFunction = (row_src: object, row_dst: object) => boolean;
+    export type RowSyncFunction = (row_src: object, type: "add" | "update" | "delete", row_dst: object | undefined) => object;
 }
 
 
@@ -146,6 +148,114 @@ declare namespace Types {
         }
     }
 
+    class RowSynchronizer {
+        public rowsFilter: RowsFilter;
+
+        constructor(rows_filter: RowsFilter) {
+            this.rowsFilter = rows_filter;
+        }
+
+
+        public exec(
+            index_column: string,
+            map_key: string,
+            sync_method: Types.RowSyncFunction | string,
+            delete_extra_rows: 0 | 1 = 0,
+            match_func: Types.RowSyncMatchFunction | undefined = undefined,
+        ): void {
+            const sourceTableName = this.rowsFilter.table.name;
+            const sourceIndexName = index_column;
+
+            const maps = map_key.split('/');
+            if (maps.length <= 1) {
+                return die("同步仅发生在两个不同的表格，请指定目标表格");
+            }
+            const destTableName = maps[0];
+            const destIndexName = maps[1];
+
+            const sourceTable = base.getTableByName(sourceTableName);
+            if (!sourceTable) {
+                die(`表【${sourceTableName}】不存在`);
+            }
+
+            const destTable = base.getTableByName(destTableName);
+            if (!destTable) {
+                die(`表【${destTableName}】不存在`);
+            }
+
+            const sourceRows = this.rowsFilter.rows;
+            const destRows = destTable.rows.map(r => base.getRowById(destTableName, r['_id']));
+
+            const addingRows: Array<object> = []
+            const updatingOldRows: Array<object> = []
+            const updatingRows: Array<object> = []
+            const deletingRows: Array<object> = []
+
+            if (delete_extra_rows == 1) {
+                destRows.forEach(drow => {
+                    const srow = sourceRows.filter(r => r[sourceIndexName] == drow[destIndexName]);
+                    if (srow.length == 0) {
+                        deletingRows.push(drow);
+                    }
+                });
+            }
+
+            let sync_func: Types.RowSyncFunction;
+            if (typeof sync_method == 'string') {
+                var pairs = sync_method.split(';').map(a=>{
+                    const kv = a.split(':');
+                    if (kv.length >1) {
+                        return kv;
+                    }
+                    return [a, a];
+                });
+                sync_func = (srow: object, type: "add" | "update" | "delete", drow: object | undefined) =>{
+                    const newrow = {};
+                    pairs.forEach(kv=> {
+                        newrow[kv[1]] = srow[kv[0]];
+                    })
+                    console.log(srow,newrow);
+                    return newrow;
+                };
+            }else {
+                sync_func = sync_method;
+            }
+
+            sourceRows.forEach(srow => {
+                const drows = destRows.filter(d => d[destIndexName] == srow[sourceIndexName]);
+                if (drows.length > 0) {
+                    const drow = drows[0];
+                    if (match_func) {
+                        if (!match_func(srow, drow)) {
+                            return;
+                        }
+                    }
+                    updatingOldRows.push(drow);
+                    updatingRows.push(sync_func(srow, 'update', drow));
+                } else {
+                    const newrow = sync_func(srow, 'add', undefined);
+                    newrow[destIndexName] = srow[sourceIndexName];
+                    addingRows.push(newrow);
+                }
+            });
+            if (!confirm(`本次同步共涉及到 ${addingRows.length} 条新增、${updatingRows.length} 条更新、${deletingRows.length} 条删除操作，是否继续？`)) {
+                return alert("同步已取消");
+            }
+
+            if (deletingRows.length > 0) {
+                deletingRows.map(r => r['_id']).forEach(id => base.deleteRow(destTableName, id));
+            }
+
+            if (addingRows.length > 0) {
+                addingRows.forEach(r => base.addRow(destTableName, r))
+            }
+
+            if (updatingRows.length > 0) {
+                base.modifyRows(destTableName, updatingOldRows, updatingRows);
+            }
+            alert('同步完成');
+        }
+    }
 
     class RowsFilter {
         public table: Table;
@@ -211,6 +321,15 @@ declare namespace Types {
             }
 
         }
+
+        public sync(
+            index_column: string,
+            map_key: string,
+            sync_method: Types.RowSyncFunction | string,
+            delete_extra_rows: 0 | 1 = 0,
+            match_func: Types.RowSyncMatchFunction | undefined = undefined): void {
+            return new RowSynchronizer(this).exec(index_column, map_key, sync_method, delete_extra_rows, match_func);
+        }
     }
 
     class Row {
@@ -247,7 +366,7 @@ declare namespace Types {
             } else {
                 if (table.name != base.getActiveTable().name) {
                     this.obj = base.getViews(table.name)[0];
-                }else {
+                } else {
                     this.obj = base.getActiveView();
                 }
             }
@@ -301,9 +420,3 @@ declare namespace Types {
     }
 
 })();
-
-
-
-
-
-
