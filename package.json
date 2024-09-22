@@ -9,7 +9,7 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "pub": "npm run build && npm run build",
+    "pub": "npm run build && npm run doc",
     "build": "rollup --config",
     "doc": "typedoc --options ./typedoc.json"
   },
