@@ -7,6 +7,9 @@
     "includeVersion": true,
     "disableSources": true,
     "lang": "zh",
+    "plugin": [
+        "typedoc-plugin-markdown"
+    ],
     "navigationLinks": {
         "入门指南": "https://3ep4b53r4d.k.topthink.com/@l4rz1ndwpx/",
         "Github": "https://github.com/LorraineMetz/seatable-extjss"
