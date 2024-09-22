@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "target": "ES5", // 设置目标编译版本，这里是 esnext，表示支持 ES6 特性
+    "module": "ESNext", // 设置模块类型，这里是 ESNext，表示使用 ES6 模块。
+    "moduleResolution": "node", // 设置模块解析方式，这里是 node，表示使用 Node.js 的模块解析方式
+    "strict": true, // 开启严格类型检查，防止类型不匹配的问题。
+
+    "allowJs": true, // 允许编译 JavaScript 文件，而不是只编译 TypeScript 文件
+    "noImplicitAny": false, // 关闭自动推断 any 类型的功能，确保类型注释不会被忽略
+    "noImplicitThis": false, // 关闭自动推断 this 类型的功能，确保类型注释不会被忽略
+
+    "esModuleInterop": true, // 允许 ES6 模块与其他模块之间的交互。
+    "sourceMap": true,
+    "baseUrl": ".", // 设置项目的根目录，这样 TypeScript 就可以从项目的根目录开始查找模块。
+    "paths": { //设置路径别名，这样在导入模块时可以更简洁
+	}, 
+    "lib": ["dom", "esnext"] // 设置支持的库，这里是 esnext 和 dom，表示支持 ES6 特性以及 DOM 相关 API
+  },
+  "include": ["src"] // 设置需要编译的文件，这里是 src
+}
+

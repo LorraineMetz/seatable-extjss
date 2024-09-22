@@ -4,6 +4,9 @@ seatable脚本扩展
 # 使用方法
 
 Seatable 中增加脚本，将代码复制放到脚本开头，即可调用扩展函数。
+
+> 注：请根据需要替换版本号
+
 ```js
 await new Promise(res => {
   v='1.0.0';

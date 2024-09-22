@@ -1,0 +1,15 @@
+{
+    "entryPoints": ["src"],
+    "entryPointStrategy": "expand",
+    "exclude": ["src/index.ts", "src/lib.ts"],
+    "excludePrivate": true,
+    "out": "docs",
+    "includeVersion": true,
+    "disableSources": true,
+    "lang": "zh",
+    "navigationLinks": {
+        "入门指南": "https://3ep4b53r4d.k.topthink.com/@l4rz1ndwpx/",
+        "Github": "https://github.com/LorraineMetz/seatable-extjss"
+    }
+  }
+  

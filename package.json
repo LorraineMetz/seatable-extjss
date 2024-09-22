@@ -1,14 +1,24 @@
 {
-  "name": "seatable-extjss",
-  "version": "1.0.0",
+  "name": "extjss",
+  "version": "1.1.0",
   "description": "seatable脚本扩展",
   "main": "index.js",
   "directories": {
     "example": "examples"
   },
+  "license": "ISC",
+  "type": "module",
   "scripts": {
-    "build": "tsc extjss.ts"
+    "pub": "npm run build && npm run build",
+    "build": "rollup --config",
+    "doc": "typedoc --options ./typedoc.json"
   },
   "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
+    "rollup": "^4.9.6",
+    "rollup-plugin-typescript": "^1.0.1",
+    "tslib": "^2.7.0",
+    "typedoc": "^0.26.7"
+  }
 }
