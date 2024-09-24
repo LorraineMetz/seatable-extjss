@@ -1,4 +1,4 @@
-import { app, base, die, inject } from "./lib";
+import { app, base, die, getArgs, inject, printLog } from "./lib";
 import { ColumnModifier } from "./column";
 
 
@@ -20,12 +20,15 @@ export class RowSelector {
      * 构造方法
      */
     constructor() {
+        const fsig = getArgs("row", arguments);
+
         this.obj = app.getCurrentRow();
         if (this.obj) {
             this.id = this.obj._id;
         } else {
             throw die('Row 对象只生效在当前行');
         }
+        printLog(fsig, `获取当前行，ID=${this.id}`)
     }
 
     /**

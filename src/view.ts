@@ -1,4 +1,4 @@
-import { base } from "src/lib";
+import { base, getArgs, printLog } from "src/lib";
 import { TableSelector } from "./table";
 import { Types } from "src/types";
 import { RowsFilter } from "./rows";
@@ -18,24 +18,26 @@ export class ViewSelector {
     public obj: any;
 
     /**
-     * 所属的表格选择器
-     */
-    public table: TableSelector;
-
-    /**
      * 构造方法
-     * @param table 表格选择器
+     * @param table 所属的表格选择器
      * @param view_name 要选择的视图名称，默认为undefined（当前活动的视图）
      */
-    constructor(table: TableSelector, view_name: string | undefined = undefined) {
-        this.table = table;
+    constructor(public table: TableSelector, view_name: string | undefined = undefined) {
+        const fsig = getArgs("view", arguments);
         if (view_name) {
             this.obj = base.getViewByName(table.name, view_name);
+            if (!this.obj) {
+                printLog(`表格或视图不存在，请检查表名、视图命是否准确`, "error");
+            }else {
+                printLog(fsig, `选中表格\`${table.name}\`的视图\`${this.obj.name}\``)
+            }
         } else {
             if (table.name != base.getActiveTable().name) {
                 this.obj = base.getViews(table.name)[0];
+                printLog(fsig, `选中表格\`${table.name}\`的第一个视图\`${this.obj.name}\``)
             } else {
                 this.obj = base.getActiveView();
+                printLog(fsig, `选中当前视图`);
             }
         }
         this.name = this.obj.name;

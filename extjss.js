@@ -13,19 +13,65 @@
   function inject(name) {
       return window[name];
   }
+  var jss = undefined;
+  function getExtjss() {
+      if (!jss) {
+          jss = window[name];
+      }
+      return jss;
+  }
+  function printLog(command, info, level) {
+      var _a;
+      if (level === void 0) { level = "log"; }
+      if (!((_a = getExtjss()) === null || _a === void 0 ? void 0 : _a.debug)) {
+          return;
+      }
+      var msg = typeof info == "object" ? info.message : info;
+      msg = "".concat(command, ":    ").concat(msg);
+      window['output'].markdown("> [`".concat(level, "`] ").concat(msg));
+      switch (level) {
+          case 'warn':
+              return console.warn(msg);
+          case 'error':
+              return console.error(msg);
+          default:
+              console.log(msg);
+      }
+  }
+  function getArgs(function_name, _args) {
+      var argv = [];
+      for (var i = 0; i < _args.length; i++) {
+          var arg = _args[i];
+          var tArg = typeof arg;
+          switch (tArg) {
+              case 'undefined':
+                  break;
+              case 'symbol':
+              case 'object':
+              case 'function':
+                  argv.push("…");
+                  break;
+              default:
+                  argv.push(arg);
+          }
+      }
+      return "".concat(function_name, "(").concat(argv.join(', '), ")");
+  }
 
   var ColumnModifier = (function () {
-      function ColumnModifier(rows_filter, column_name) {
-          this.rowsFilter = rows_filter;
-          if (column_name) {
-              this._columnName = column_name;
-          }
-          else {
+      function ColumnModifier(rowsFilter, _columnName) {
+          this.rowsFilter = rowsFilter;
+          this._columnName = _columnName;
+          var fsig = getArgs('column', arguments);
+          if (!this._columnName) {
               throw die("脚本执行失败，原因是未指定字段名称“.column(column_name)”");
           }
+          printLog(fsig, '获取数据列修改器');
       }
       ColumnModifier.prototype.exec = function (func) {
           var _this = this;
+          var fsig = getArgs('column.exec', arguments);
+          printLog(fsig, '执行方法');
           var selectedRows = [], updateRows = [];
           this.rowsFilter.rows.forEach(function (row) {
               var _a;
@@ -36,7 +82,7 @@
                       _a[_this._columnName] = result,
                       _a));
               }
-              catch (error) {
+              catch (_b) {
                   return;
               }
           });
@@ -45,6 +91,7 @@
       ColumnModifier.prototype.ref = function (raw_filter, func, operation, sourceTableName) {
           if (operation === void 0) { operation = undefined; }
           if (sourceTableName === void 0) { sourceTableName = undefined; }
+          var fsig = getArgs('column.exec', arguments);
           if (!sourceTableName) {
               sourceTableName = this.rowsFilter.table.name;
           }
@@ -52,6 +99,7 @@
           if (!sourceTable) {
               die("\u8868\u3010".concat(sourceTableName, "\u3011\u4E0D\u5B58\u5728"));
           }
+          printLog(fsig, "\u6267\u884C\u65B9\u6CD5\uFF0C\u6E90\u8868\u540D=".concat(sourceTableName));
           var sourceRows = sourceTable.rows.map(function (r) { return base.getRowById(sourceTableName, r['_id']); });
           this.exec(function (r) {
               var results = raw_filter(r, sourceRows);
@@ -65,6 +113,7 @@
       };
       ColumnModifier.prototype.map = function (index_column, map_key, result_column, operation) {
           if (operation === void 0) { operation = undefined; }
+          var fsig = getArgs('column.map', arguments);
           var sourceTableName = this.rowsFilter.table.name;
           var sourceColumnName = map_key;
           var maps = map_key.split('/');
@@ -76,6 +125,7 @@
           if (!sourceTable) {
               die("\u8868\u3010".concat(sourceTableName, "\u3011\u4E0D\u5B58\u5728"));
           }
+          printLog(fsig, "\u6267\u884C\u65B9\u6CD5\uFF0C\u6E90\u8868\u540D=".concat(sourceTableName, "\uFF0C \u6E90\u6570\u636E\u5217\u540D=").concat(sourceColumnName));
           var sourceRows = sourceTable.rows.map(function (r) { return base.getRowById(sourceTableName, r['_id']); });
           this.exec(function (r) {
               var results = sourceRows.filter(function (a) { return a[sourceColumnName] == r[index_column]; });
@@ -106,12 +156,14 @@
   }());
 
   var RowSynchronizer = (function () {
-      function RowSynchronizer(rows_filter) {
-          this.rowsFilter = rows_filter;
+      function RowSynchronizer(rowsFilter) {
+          this.rowsFilter = rowsFilter;
+          printLog(getArgs('sync', arguments), "\u6267\u884C\u6570\u636E\u540C\u6B65\u5668");
       }
       RowSynchronizer.prototype.exec = function (index_column, map_key, sync_method, delete_extra_rows, match_func) {
           if (delete_extra_rows === void 0) { delete_extra_rows = 0; }
           if (match_func === void 0) { match_func = undefined; }
+          var fsig = getArgs('sync.exec', arguments);
           var sourceTableName = this.rowsFilter.table.name;
           var sourceIndexName = index_column;
           var maps = map_key.split('/');
@@ -128,6 +180,8 @@
           if (!destTable) {
               die("\u8868\u3010".concat(destTableName, "\u3011\u4E0D\u5B58\u5728"));
           }
+          printLog(fsig, "\u6267\u884C\u6570\u636E\u540C\u6B65\uFF0C\u6E90\u8868\u540D=".concat(sourceTableName, "\uFF0C\u6E90\u7D22\u5F15=").concat(sourceIndexName));
+          printLog(fsig, "\u6267\u884C\u6570\u636E\u540C\u6B65\uFF0C\u76EE\u6807\u8868=".concat(destTableName, "\uFF0C\u76EE\u6807\u7D22\u5F15=").concat(destIndexName));
           var sourceRows = this.rowsFilter.rows;
           var destRows = destTable.rows.map(function (r) { return base.getRowById(destTableName, r['_id']); });
           var addingRows = [];
@@ -135,6 +189,7 @@
           var updatingRows = [];
           var deletingRows = [];
           if (delete_extra_rows == 1) {
+              printLog(fsig, "\u63D0\u53D6\u76EE\u6807\u8868\u5185\u7684\u591A\u4F59\u6570\u636E\u7528\u4E8E\u5220\u9664");
               destRows.forEach(function (drow) {
                   var srow = sourceRows.filter(function (r) { return r[sourceIndexName] == drow[destIndexName]; });
                   if (srow.length == 0) {
@@ -144,7 +199,7 @@
           }
           var sync_func;
           if (typeof sync_method == 'string') {
-              var pairs = sync_method.split(';').map(function (a) {
+              var pairs_1 = sync_method.split(';').map(function (a) {
                   var kv = a.split(':');
                   if (kv.length > 1) {
                       return kv;
@@ -153,10 +208,10 @@
               });
               sync_func = function (srow, type, drow) {
                   var newrow = {};
-                  pairs.forEach(function (kv) {
+                  pairs_1.forEach(function (kv) {
                       newrow[kv[1]] = srow[kv[0]];
                   });
-                  console.log(srow, newrow);
+                  console.log(srow, type, drow, newrow);
                   return newrow;
               };
           }
@@ -201,22 +256,26 @@
   var RowsFilter = (function () {
       function RowsFilter(view, row_filter) {
           if (row_filter === void 0) { row_filter = undefined; }
+          this.view = view;
           this.rows = [];
+          var fsig = getArgs("rows", arguments);
           var tableName = view.table.name;
           var viewName = view.name;
           this.table = view.table;
-          this.view = view;
+          printLog(fsig, "\u6267\u884C\u6570\u636E\u7B5B\u9009\u5668\uFF1A\u8868\u540D=".concat(tableName, "\uFF0C\u89C6\u56FE\u540D=").concat(viewName));
           if (row_filter) {
               if (typeof row_filter == "function") {
                   this.rows = base
                       .getRows(tableName, viewName)
                       .filter(row_filter);
+                  printLog(fsig, "\u4EE5js\u65B9\u6CD5\u5F62\u5F0F\u6267\u884C\u7B5B\u9009\uFF0C\u6570\u636E\u91CF=".concat(this.rows.length));
               }
               else if (typeof row_filter == "string") {
                   var result = base.filter(tableName, viewName, row_filter);
                   if (result) {
                       this.rows = result.all();
                   }
+                  printLog(fsig, "\u4EE5\u6587\u672C\u6A21\u5F0F\u6267\u884C\u7B5B\u9009\uFF0C\u6570\u636E\u91CF=".concat(this.rows.length));
               }
               else if (Array.isArray(row_filter)) {
                   var qs_1;
@@ -231,10 +290,12 @@
                   if (qs_1) {
                       this.rows = qs_1.all();
                   }
+                  printLog(fsig, "\u4EE5\u6587\u672C\u6570\u7EC4\u6A21\u5F0F\u6267\u884C\u7B5B\u9009\uFF0C\u6570\u636E\u91CF=".concat(this.rows.length));
               }
           }
           else {
               this.rows = base.getRows(tableName, viewName);
+              printLog(fsig, "\u83B7\u53D6\u5168\u90E8\u6570\u636E\uFF0C\u6570\u636E\u91CF=".concat(this.rows.length));
           }
       }
       RowsFilter.prototype.column = function (column_name) {
@@ -272,15 +333,24 @@
       function ViewSelector(table, view_name) {
           if (view_name === void 0) { view_name = undefined; }
           this.table = table;
+          var fsig = getArgs("view", arguments);
           if (view_name) {
               this.obj = base.getViewByName(table.name, view_name);
+              if (!this.obj) {
+                  printLog("\u8868\u683C\u6216\u89C6\u56FE\u4E0D\u5B58\u5728\uFF0C\u8BF7\u68C0\u67E5\u8868\u540D\u3001\u89C6\u56FE\u547D\u662F\u5426\u51C6\u786E", "error");
+              }
+              else {
+                  printLog(fsig, "\u9009\u4E2D\u8868\u683C`".concat(table.name, "`\u7684\u89C6\u56FE`").concat(this.obj.name, "`"));
+              }
           }
           else {
               if (table.name != base.getActiveTable().name) {
                   this.obj = base.getViews(table.name)[0];
+                  printLog(fsig, "\u9009\u4E2D\u8868\u683C`".concat(table.name, "`\u7684\u7B2C\u4E00\u4E2A\u89C6\u56FE`").concat(this.obj.name, "`"));
               }
               else {
                   this.obj = base.getActiveView();
+                  printLog(fsig, "\u9009\u4E2D\u5F53\u524D\u89C6\u56FE");
               }
           }
           this.name = this.obj.name;
@@ -295,19 +365,32 @@
   var TableSelector = (function () {
       function TableSelector(table_name) {
           if (table_name === void 0) { table_name = undefined; }
+          var fsig = getArgs("table", arguments);
           if (table_name) {
               this.obj = base.getTableByName(table_name);
+              if (!this.obj) {
+                  printLog(fsig, "\u8868\u683C\u4E0D\u5B58\u5728\uFF0C\u8BF7\u68C0\u67E5\u8868\u540D\u662F\u5426\u51C6\u786E", "error");
+              }
           }
           else {
               this.obj = base.getActiveTable();
           }
           this.name = this.obj.name;
+          printLog(fsig, "\u9009\u4E2D\u8868\u683C\uFF1A**".concat(this.name, "**"));
       }
       TableSelector.prototype.view = function (view_name) {
           if (view_name === void 0) { view_name = undefined; }
           return new ViewSelector(this, view_name);
       };
+      TableSelector.prototype.rows = function (row_filter) {
+          if (row_filter === void 0) { row_filter = undefined; }
+          return this.view().rows(row_filter);
+      };
+      TableSelector.prototype.column = function (column_name) {
+          return this.rows().column(column_name);
+      };
       TableSelector.prototype.map = function (fill_column, index_column, map_key, result_column) {
+          var fsig = getArgs("table.map", arguments);
           var maps = map_key.split('/');
           var sourceTableName = this.name;
           var sourceColumnName = map_key;
@@ -315,6 +398,8 @@
               sourceTableName = maps[0];
               sourceColumnName = maps[1];
           }
+          printLog(fsig, "\u76EE\u6807\u8868\uFF1A\u8868\u540D=".concat(this.name, "\uFF0C\u586B\u5145\u5B57\u6BB5=").concat(fill_column, "\uFF0C\u7D22\u5F15\u5B57\u6BB5=").concat(index_column));
+          printLog(fsig, "\u6570\u636E\u6E90\uFF1A\u8868\u540D=".concat(sourceTableName, "\uFF0C\u6570\u636E\u5B57\u6BB5=").concat(result_column, "\uFF0C\u7D22\u5F15\u5B57\u6BB5=").concat(sourceColumnName));
           base.utils.lookupAndCopy(this.name, fill_column, index_column, sourceTableName, result_column, sourceColumnName);
       };
       return TableSelector;
@@ -322,6 +407,7 @@
 
   var RowSelector = (function () {
       function RowSelector() {
+          var fsig = getArgs("row", arguments);
           this.obj = app.getCurrentRow();
           if (this.obj) {
               this.id = this.obj._id;
@@ -329,6 +415,7 @@
           else {
               throw die('Row 对象只生效在当前行');
           }
+          printLog(fsig, "\u83B7\u53D6\u5F53\u524D\u884C\uFF0CID=".concat(this.id));
       }
       RowSelector.prototype.column = function (column_name) {
           var rowsFilter = inject('rows')();
@@ -340,6 +427,7 @@
 
   var Extjss = (function () {
       function Extjss() {
+          this.debug = false;
           this.version();
       }
       Extjss.prototype.version = function () {

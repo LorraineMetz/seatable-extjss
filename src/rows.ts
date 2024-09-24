@@ -3,7 +3,7 @@ import { TableSelector } from "./table";
 import { ViewSelector } from "./view";
 import { ColumnModifier } from "./column";
 import { RowSynchronizer } from "./sync";
-import { base } from "./lib";
+import { base, getArgs, printLog } from "./lib";
 
 /**
  * 数据行（记录）筛选器
@@ -15,10 +15,6 @@ export class RowsFilter {
      */
     public table: TableSelector;
     /**
-     * 所属的视图选择器
-     */
-    public view: ViewSelector;
-    /**
      * 已筛选的数据行（记录）
      */
     public rows: Array<any> = [];
@@ -29,23 +25,27 @@ export class RowsFilter {
      * @param view 视图选择器
      * @param row_filter 筛选方法，参考View.rows()
      */
-    constructor(view: ViewSelector, row_filter: Types.RowFilterFunction | string | Array<string> | undefined = undefined) {
+    constructor(public view: ViewSelector, row_filter: Types.RowFilterFunction | string | Array<string> | undefined = undefined) {
+        const fsig = getArgs("rows", arguments);
+        
         const tableName = view.table.name;
         const viewName = view.name;
         this.table = view.table;
-        this.view = view;
 
+        printLog(fsig, `执行数据筛选器：表名=${tableName}，视图名=${viewName}`);
 
         if (row_filter) {
             if (typeof row_filter == "function") {
                 this.rows = base
                     .getRows(tableName, viewName)
                     .filter(row_filter);
+                printLog(fsig, `以js方法形式执行筛选，数据量=${this.rows.length}`);
             } else if (typeof row_filter == "string") {
                 const result = base.filter(tableName, viewName, row_filter);
                 if (result) {
                     this.rows = result.all();
                 }
+                printLog(fsig, `以文本模式执行筛选，数据量=${this.rows.length}`);
             } else if (Array.isArray(row_filter)) {
                 let qs;
                 row_filter.forEach(f => {
@@ -58,9 +58,11 @@ export class RowsFilter {
                 if (qs) {
                     this.rows = qs.all();
                 }
+                printLog(fsig, `以文本数组模式执行筛选，数据量=${this.rows.length}`);
             }
         } else {
             this.rows = base.getRows(tableName, viewName);
+            printLog(fsig, `获取全部数据，数据量=${this.rows.length}`);
         }
     }
 

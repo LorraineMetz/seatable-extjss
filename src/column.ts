@@ -1,5 +1,5 @@
 import { RowsFilter } from "./rows";
-import { die, base } from "./lib";
+import { die, base, getArgs, printLog } from "./lib";
 import { Types } from "./types";
 
 /**
@@ -7,24 +7,19 @@ import { Types } from "./types";
  * @hideconstructor
  */
 export class ColumnModifier {
-    /**
-     * 数据行筛选器
-     */
-    public rowsFilter: RowsFilter;
-    private _columnName: string;
 
     /**
      * 
-     * @param rows_filter 数据行筛选器
-     * @param column_name 要修改的字段名称
+     * @param rowsFilter 数据行筛选器
+     * @param _columnName 要修改的字段名称
      */
-    constructor(rows_filter: RowsFilter, column_name: string) {
-        this.rowsFilter = rows_filter;
-        if (column_name) {
-            this._columnName = column_name;
-        } else {
+    constructor(public rowsFilter: RowsFilter, private _columnName: string) {
+        const fsig = getArgs('column', arguments);
+
+        if (!this._columnName) {
             throw die("脚本执行失败，原因是未指定字段名称“.column(column_name)”");
         }
+        printLog(fsig, '获取数据列修改器');
     }
 
 
@@ -33,6 +28,8 @@ export class ColumnModifier {
      * @param func javascript 方法
      */
     public exec(func: Types.ColumnModifyFunction): void {
+        const fsig = getArgs('column.exec', arguments);
+        printLog(fsig, '执行方法');
         const selectedRows: Array<any> = [],
             updateRows: Array<any> = [];
         this.rowsFilter.rows.forEach((row) => {
@@ -42,7 +39,7 @@ export class ColumnModifier {
                 updateRows.push({
                     [this._columnName]: result,
                 });
-            } catch (error) {
+            } catch {
                 return;
             }
         });
@@ -59,6 +56,8 @@ export class ColumnModifier {
     public ref(raw_filter: Types.RowsFilterFunction, func: Types.ColumnRefModifyFunction,
         operation: "last" | "first" | undefined = undefined,
         sourceTableName: string | undefined = undefined): void {
+        const fsig = getArgs('column.exec', arguments);
+
         if (!sourceTableName) {
             sourceTableName = this.rowsFilter.table.name;
         }
@@ -66,10 +65,12 @@ export class ColumnModifier {
         if (!sourceTable) {
             die(`表【${sourceTableName}】不存在`);
         }
+        printLog(fsig, `执行方法，源表名=${sourceTableName}`);
+
         const sourceRows = sourceTable.rows.map(r => base.getRowById(sourceTableName, r['_id']))
 
         this.exec(r => {
-            var results = raw_filter(r, sourceRows);
+            const results = raw_filter(r, sourceRows);
             if (operation == "last") {
                 return func(r, results[results.length - 1]);
             } else {
@@ -87,6 +88,7 @@ export class ColumnModifier {
      */
     public map(index_column: string, map_key: string, result_column: string,
         operation: "sum" | "count" | "first" | "last" | "max" | "min" | "avg" | undefined = undefined): void {
+        const fsig = getArgs('column.map', arguments);
 
         let sourceTableName = this.rowsFilter.table.name;
         let sourceColumnName = map_key;
@@ -99,10 +101,12 @@ export class ColumnModifier {
         if (!sourceTable) {
             die(`表【${sourceTableName}】不存在`);
         }
+        printLog(fsig, `执行方法，源表名=${sourceTableName}， 源数据列名=${sourceColumnName}`);
+
         const sourceRows = sourceTable.rows.map(r => base.getRowById(sourceTableName, r['_id']))
 
         this.exec(r => {
-            var results = sourceRows.filter(a => a[sourceColumnName] == r[index_column]);
+            const results = sourceRows.filter(a => a[sourceColumnName] == r[index_column]);
             if (results.length == 0) {
                 throw new Error();
             }

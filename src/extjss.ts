@@ -13,6 +13,11 @@ import { ColumnModifier } from './column';
  */
 export class Extjss {
 
+    /**
+     * 是否开启debug模式
+     */
+    public debug: boolean = false;
+
     constructor() {
         this.version();
     }

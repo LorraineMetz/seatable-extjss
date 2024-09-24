@@ -1,23 +1,19 @@
 import { RowsFilter } from "./rows";
 import { Types } from "./types";
-import { die, base } from "./lib";
+import { die, base, printLog, getArgs } from "./lib";
 
 /**
  * 数据同步器
  * @hideconstructor
  */
 export class RowSynchronizer {
-    /**
-     * 数据筛选器
-     */
-    public rowsFilter: RowsFilter;
 
     /**
      * 
-     * @param rows_filter 数据筛选器
+     * @param rowsFilter 数据筛选器
      */
-    constructor(rows_filter: RowsFilter) {
-        this.rowsFilter = rows_filter;
+    constructor(public rowsFilter: RowsFilter) {
+        printLog(getArgs('sync', arguments), `执行数据同步器`);
     }
 
 
@@ -36,6 +32,8 @@ export class RowSynchronizer {
         delete_extra_rows: 0 | 1 = 0,
         match_func: Types.RowSyncMatchFunction | undefined = undefined
     ): void {
+        const fsig = getArgs('sync.exec', arguments);
+
         const sourceTableName = this.rowsFilter.table.name;
         const sourceIndexName = index_column;
 
@@ -55,6 +53,8 @@ export class RowSynchronizer {
         if (!destTable) {
             die(`表【${destTableName}】不存在`);
         }
+        printLog(fsig, `执行数据同步，源表名=${sourceTableName}，源索引=${sourceIndexName}`)
+        printLog(fsig, `执行数据同步，目标表=${destTableName}，目标索引=${destIndexName}`)
 
         const sourceRows = this.rowsFilter.rows;
         const destRows = destTable.rows.map(r => base.getRowById(destTableName, r['_id']));
@@ -65,6 +65,8 @@ export class RowSynchronizer {
         const deletingRows: Array<object> = []
 
         if (delete_extra_rows == 1) {
+            printLog(fsig, `提取目标表内的多余数据用于删除`)
+
             destRows.forEach(drow => {
                 const srow = sourceRows.filter(r => r[sourceIndexName] == drow[destIndexName]);
                 if (srow.length == 0) {
@@ -75,7 +77,7 @@ export class RowSynchronizer {
 
         let sync_func: Types.RowSyncFunction;
         if (typeof sync_method == 'string') {
-            var pairs = sync_method.split(';').map(a => {
+            const pairs = sync_method.split(';').map(a => {
                 const kv = a.split(':');
                 if (kv.length > 1) {
                     return kv;
@@ -87,7 +89,7 @@ export class RowSynchronizer {
                 pairs.forEach(kv => {
                     newrow[kv[1]] = srow[kv[0]];
                 })
-                console.log(srow, newrow);
+                console.log(srow, type, drow, newrow);
                 return newrow;
             };
         } else {
