@@ -1,8 +1,10 @@
-import { base, getArgs, printLog } from "src/lib";
+import { base, die, getArgs, printLog } from "src/lib";
 import { ViewSelector } from "./view";
 import { Types } from "./types";
 import { RowsFilter } from "./rows";
 import { ColumnModifier } from "./column";
+import { TableMerger } from "./merge";
+import { TableSplitter } from "./split";
 
 /**
  * 表格选择器
@@ -94,5 +96,54 @@ export class TableSelector {
             this.name, fill_column, index_column,
             sourceTableName, result_column, sourceColumnName
         );
+    }
+
+
+    /**
+     * 获取表格合并器
+     * @param index_column 索引列
+     * @param subtables 其他表，可以为文本表名或 行筛选器
+     * @param duplicate_rows 重复行处理方式， first：仅保留第一个表格的首个数据；all：保留所有数据
+     * @param exists_row 已存在行的处理方式，update：更新；skip：跳过
+     * @returns 表格合并器
+     */
+    public mergeBy(index_column: string, 
+        subtables: Array<string> | Array<RowsFilter>,
+        duplicate_rows: "first"| "all"= "first",
+        exists_row: "update"| "skip" = "skip"): TableMerger {
+        return new TableMerger(this, index_column, subtables, duplicate_rows, exists_row);
+    }
+
+    /**
+     * 获取表格分割工具，将当前表的数据分配到目标表（不删除当前表）
+     * @param items 表格定义，；类似`{"目标表 1": rows()}`的方式定义，你可以按需要筛选数据到不同的表格
+     * @param index_column 索引列
+     * @param [exists_row="skip"] 已存在的行处理方式，update：更新;skip：跳过
+     * @returns 表格分割器
+     */
+    public splitTo(items: {[key: string]: RowsFilter}, index_column: string, exists_row: "update"| "skip" = "skip"): TableSplitter {
+        return new TableSplitter(this, items, index_column, exists_row);
+    }
+
+    /**
+     * 判断本表是否可以分配给目标表（本表的字段能在目标表中找到，目标表可以多于本表）
+     * @param table_name 目标表名
+     */
+    public canAssignTo(table_name: string) {
+        const my_columns = base.getColumns(this.name);
+        const other_columns = base.getColumns(table_name);
+
+        for(const mycol of my_columns) {
+            const {name, type} = mycol;
+            const othercols = other_columns.filter(c=>c['name'] == name);
+            if (!othercols || othercols.length == 0) {
+                return die(`字段${name}在${table_name}表不存在`);
+            }
+            const othercol = othercols[0];
+            if (othercol['type'] != type) {
+                return die(`字段${name}的类型与${table_name}表不一致`);
+            }
+        }
+
     }
 }

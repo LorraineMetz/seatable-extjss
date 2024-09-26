@@ -1,6 +1,6 @@
 {
   "name": "extjss",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "seatable脚本扩展",
   "main": "index.js",
   "directories": {

@@ -1,8 +1,8 @@
-[**extjss v1.1.0**](../../README.md) • **Docs**
+[**extjss v1.2.0**](../../README.md) • **Docs**
 
 ***
 
-[extjss v1.1.0](../../modules.md) / [sync](../README.md) / RowSynchronizer
+[extjss v1.2.0](../../modules.md) / [sync](../README.md) / RowSynchronizer
 
 # 类: RowSynchronizer
 

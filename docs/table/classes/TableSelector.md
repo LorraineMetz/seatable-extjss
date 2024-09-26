@@ -1,8 +1,8 @@
-[**extjss v1.1.0**](../../README.md) • **Docs**
+[**extjss v1.2.0**](../../README.md) • **Docs**
 
 ***
 
-[extjss v1.1.0](../../modules.md) / [table](../README.md) / TableSelector
+[extjss v1.2.0](../../modules.md) / [table](../README.md) / TableSelector
 
 # 类: TableSelector
 
@@ -25,6 +25,44 @@
 SeaTableAPI 中的 Table 对象
 
 ## 方法
+
+### canAssignTo()
+
+> **canAssignTo**(`table_name`): `void`
+
+判断本表是否可以分配给目标表（本表的字段能在目标表中找到，目标表可以多于本表）
+
+#### 参数
+
+• **table\_name**: `string`
+
+目标表名
+
+#### 返回
+
+`void`
+
+***
+
+### column()
+
+> **column**(`column_name`): [`ColumnModifier`](../../column/classes/ColumnModifier.md)
+
+获取本表当前（或默认）视图全部数据行的数据列（字段）修改器
+
+#### 参数
+
+• **column\_name**: `string`
+
+指定要修改的字段名称
+
+#### 返回
+
+[`ColumnModifier`](../../column/classes/ColumnModifier.md)
+
+数据列（字段）修改器
+
+***
 
 ### map()
 
@@ -58,6 +96,86 @@ SeaTableAPI 中的 Table 对象
 #### 参阅
 
 [base.utils.lookupAndCopy](https://seatable.github.io/seatable-scripts-cn/javascript/utils/#lookupandcopy)
+
+***
+
+### mergeBy()
+
+> **mergeBy**(`index_column`, `subtables`, `duplicate_rows`, `exists_row`): [`TableMerger`](../../merge/classes/TableMerger.md)
+
+获取表格合并器
+
+#### 参数
+
+• **index\_column**: `string`
+
+索引列
+
+• **subtables**: `string`[] \| [`RowsFilter`](../../rows/classes/RowsFilter.md)[]
+
+其他表，可以为文本表名或 行筛选器
+
+• **duplicate\_rows**: `"all"` \| `"first"` = `"first"`
+
+重复行处理方式， first：仅保留第一个表格的首个数据；all：保留所有数据
+
+• **exists\_row**: `"update"` \| `"skip"` = `"skip"`
+
+已存在行的处理方式，update：更新；skip：跳过
+
+#### 返回
+
+[`TableMerger`](../../merge/classes/TableMerger.md)
+
+表格合并器
+
+***
+
+### rows()
+
+> **rows**(`row_filter`): [`RowsFilter`](../../rows/classes/RowsFilter.md)
+
+获取本表当前视图（或默认视图）的数据（记录）筛选器
+
+#### 参数
+
+• **row\_filter**: `undefined` \| `string` \| `string`[] \| [`RowFilterFunction`](../../types/namespaces/Types/type-aliases/RowFilterFunction.md) = `undefined`
+
+筛选方法，**可选的**，支持js函数`RowFilterFunction`、SeaTable 的文本筛选、SeaTable 文本筛选组（适合一般复杂场景）
+
+#### 返回
+
+[`RowsFilter`](../../rows/classes/RowsFilter.md)
+
+数据（记录）筛选器
+
+***
+
+### splitTo()
+
+> **splitTo**(`items`, `index_column`, `exists_row`?): [`TableSplitter`](../../split/classes/TableSplitter.md)
+
+获取表格分割工具，将当前表的数据分配到目标表（不删除当前表）
+
+#### 参数
+
+• **items**
+
+表格定义，；类似`{"目标表 1": rows()}`的方式定义，你可以按需要筛选数据到不同的表格
+
+• **index\_column**: `string`
+
+索引列
+
+• **exists\_row?**: `"update"` \| `"skip"` = `"skip"`
+
+已存在的行处理方式，update：更新;skip：跳过
+
+#### 返回
+
+[`TableSplitter`](../../split/classes/TableSplitter.md)
+
+表格分割器
 
 ***
 

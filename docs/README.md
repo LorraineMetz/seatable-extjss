@@ -1,4 +1,4 @@
-**extjss v1.1.0** • [**Docs**](modules.md)
+**extjss v1.2.0** • [**Docs**](modules.md)
 
 ***
 

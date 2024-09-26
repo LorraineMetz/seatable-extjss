@@ -1,8 +1,8 @@
-[**extjss v1.1.0**](../../README.md) • **Docs**
+[**extjss v1.2.0**](../../README.md) • **Docs**
 
 ***
 
-[extjss v1.1.0](../../modules.md) / [column](../README.md) / ColumnModifier
+[extjss v1.2.0](../../modules.md) / [column](../README.md) / ColumnModifier
 
 # 类: ColumnModifier
 
@@ -56,7 +56,7 @@ javascript 方法
 
 关联表的数据列	函数将使用该列的结果
 
-• **operation**: `undefined` \| `"max"` \| `"min"` \| `"sum"` \| `"last"` \| `"first"` \| `"count"` \| `"avg"` = `undefined`
+• **operation**: `undefined` \| `"max"` \| `"min"` \| `"sum"` \| `"first"` \| `"last"` \| `"count"` \| `"avg"` = `undefined`
 
 聚合操作 **可选的**，支持`sum`、`count`、`first`、`last`、`max`、`min`、`avg`，为空时使用首行结果（部分聚合操作，仅限数字列）
 
@@ -82,7 +82,7 @@ js过滤函数
 
 结果修改函数
 
-• **operation**: `undefined` \| `"last"` \| `"first"` = `undefined`
+• **operation**: `undefined` \| `"first"` \| `"last"` = `undefined`
 
 引用哪条数据，**可选**，支持`last`、`first`，默认为`first`
 

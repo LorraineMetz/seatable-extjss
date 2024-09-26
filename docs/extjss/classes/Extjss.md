@@ -1,8 +1,8 @@
-[**extjss v1.1.0**](../../README.md) • **Docs**
+[**extjss v1.2.0**](../../README.md) • **Docs**
 
 ***
 
-[extjss v1.1.0](../../modules.md) / [extjss](../README.md) / Extjss
+[extjss v1.2.0](../../modules.md) / [extjss](../README.md) / Extjss
 
 # 类: Extjss
 
@@ -17,6 +17,14 @@ Extjss 函数库
 #### 返回
 
 [`Extjss`](Extjss.md)
+
+## 特性
+
+### debug
+
+> **debug**: `boolean` = `false`
+
+是否开启debug模式
 
 ## 方法
 

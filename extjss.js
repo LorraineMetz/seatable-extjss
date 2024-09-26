@@ -2,7 +2,7 @@
   'use strict';
 
   var name = "extjss";
-  var version = "1.1.0";
+  var version = "1.2.0";
 
   var base = window['base'];
   var app = window['app'];
@@ -362,6 +362,172 @@
       return ViewSelector;
   }());
 
+  var TableMerger = (function () {
+      function TableMerger(table, index_column, subtables, duplicate_rows, exists_row) {
+          if (duplicate_rows === void 0) { duplicate_rows = "first"; }
+          if (exists_row === void 0) { exists_row = "skip"; }
+          var fsig = getArgs("merge", arguments);
+          printLog(fsig, "执行表格合并");
+          for (var _i = 0, subtables_1 = subtables; _i < subtables_1.length; _i++) {
+              var subtable = subtables_1[_i];
+              if (typeof subtable == 'string') {
+                  table.canAssignTo(subtable);
+              }
+              else {
+                  table.canAssignTo(subtable.table.name);
+              }
+          }
+          printLog(fsig, "\u8868\u683C\u6570\u636E\u7ED3\u6784\u76F8\u540C\uFF0C\u53EF\u4EE5\u5408\u5E76\u2026\u2026");
+          var adding2 = (function () {
+              var table = inject('table');
+              printLog(fsig, "\u8FDB\u884C\u6570\u636E\u8F6C\u6362\u2026\u2026");
+              var _table_rows = subtables.map(function (t) {
+                  if (typeof t == 'string') {
+                      var _ = table(t).rows().rows;
+                      printLog(fsig, "\u8868\u683C".concat(t, "\u5171").concat(_.length, "\u6761\u6570\u636E"));
+                      return _;
+                  }
+                  else {
+                      var _ = t.rows;
+                      printLog(fsig, "\u8868\u683C".concat(t.table.name, "\u5171").concat(_.length, "\u6761\u6570\u636E"));
+                      return _;
+                  }
+              });
+              var table_rows = Array.prototype.concat.apply([], _table_rows);
+              printLog(fsig, "\u6570\u636E\u5C55\u5F00\u5B8C\u6210\uFF0C\u5F85\u5408\u5E76\u8868\u683C\u5171\u6709".concat(table_rows.length, "\u6761\u6570\u636E"));
+              if (duplicate_rows == 'first') {
+                  var rtKeys_1 = [];
+                  table_rows = table_rows.filter(function (row) {
+                      var key = row[index_column];
+                      if (rtKeys_1.indexOf(key) >= 0) {
+                          return false;
+                      }
+                      rtKeys_1.push(key);
+                      return true;
+                  });
+              }
+              return table_rows;
+          })();
+          printLog(fsig, "\u5171\u6709".concat(adding2.length, "\u6761\u6570\u636E\u9700\u8981\u5408\u5E76\u81F3\u672C\u8868"));
+          var updatingRows = [];
+          var updatingOldRows = [];
+          var addingRows = [];
+          (function () {
+              var myRows = table.rows().rows;
+              var myRowsKeys = myRows.map(function (r) { return r[index_column]; });
+              if (exists_row == 'skip') {
+                  addingRows = adding2.filter(function (r) { return myRowsKeys.indexOf(r[index_column]) === -1; });
+                  return;
+              }
+              var _loop_1 = function (row) {
+                  var key = row[index_column];
+                  if (myRowsKeys.indexOf(key) >= 0) {
+                      var exists_one = myRows.filter(function (r) { return r[index_column] == key; })[0];
+                      updatingOldRows.push(exists_one);
+                      updatingRows.push(row);
+                  }
+                  else {
+                      addingRows.push(row);
+                  }
+              };
+              for (var _i = 0, adding2_1 = adding2; _i < adding2_1.length; _i++) {
+                  var row = adding2_1[_i];
+                  _loop_1(row);
+              }
+          })();
+          printLog(fsig, "\u672C\u6B21\u5408\u5E76\u5171\u6D89\u53CA\u5230 ".concat(addingRows.length, " \u6761\u65B0\u589E\u3001").concat(updatingRows.length, " \u6761\u66F4\u65B0"));
+          if (!confirm("\u672C\u6B21\u5408\u5E76\u5171\u6D89\u53CA\u5230 ".concat(addingRows.length, " \u6761\u65B0\u589E\u3001").concat(updatingRows.length, " \u6761\u66F4\u65B0\uFF0C\u662F\u5426\u7EE7\u7EED\uFF1F"))) {
+              printLog(fsig, "\u5408\u5E76\u5DF2\u53D6\u6D88");
+              alert("合并已取消");
+              return;
+          }
+          if (updatingRows.length > 0) {
+              printLog(fsig, "\u66F4\u65B0\u65E2\u6709\u6570\u636E\u2026\u2026");
+              base.modifyRows(table.name, updatingOldRows, updatingRows);
+              printLog(fsig, "\u65E2\u6709\u6570\u636E\u66F4\u65B0\u5B8C\u6210");
+          }
+          if (addingRows.length > 0) {
+              printLog(fsig, "\u6267\u884C\u65B0\u589E\u6570\u636E\u2026\u2026");
+              addingRows.forEach(function (r) { return base.addRow(table.name, r); });
+              printLog(fsig, "\u65B0\u589E\u6570\u636E\u5B8C\u6210");
+          }
+          printLog(fsig, "\u5408\u5E76\u5B8C\u6210");
+          alert('合并完成');
+      }
+      return TableMerger;
+  }());
+
+  var TableSplitter = (function () {
+      function TableSplitter(table, items, index_column, exists_row) {
+          if (exists_row === void 0) { exists_row = "skip"; }
+          var fsig = getArgs("split", arguments);
+          for (var tableName in items) {
+              var rowfilter = items[tableName];
+              table.canAssignTo(rowfilter.table.name);
+          }
+          var table_cmd = inject('table');
+          var changed = Object.keys(items).map(function (tableName) {
+              var rowfilter = items[tableName];
+              var sourceRows = rowfilter.rows;
+              var destTable = table_cmd(tableName);
+              var destRows = destTable.rows().rows;
+              var sourceKeys = sourceRows.map(function (r) { return r[index_column]; });
+              var destKeys = destRows.map(function (r) { return r[index_column]; });
+              var duplicateKeys = destKeys.filter(function (k) { return sourceKeys.indexOf(k) >= 0; });
+              var updatingRows = [];
+              var updatingOldRows = [];
+              var adding;
+              if (duplicateKeys.length > 0) {
+                  adding = sourceRows.filter(function (r) { return duplicateKeys.indexOf(r[index_column]) === -1; });
+                  if (exists_row == 'update') {
+                      duplicateKeys.forEach(function (k) {
+                          var source = sourceRows.filter(function (r) { return r[index_column] == k; })[0];
+                          var dest = destRows.filter(function (r) { return r[index_column] == k; })[0];
+                          updatingRows.push(source);
+                          updatingOldRows.push(dest);
+                      });
+                  }
+              }
+              else {
+                  adding = sourceRows;
+              }
+              printLog(fsig, "\u8BA1\u7B97\u66F4\u6539\uFF1A\u8868\u540D=".concat(tableName, "\uFF0C\u65B0\u589E=").concat(adding.length, "\u6761\uFF0C\u66F4\u65B0=").concat(updatingRows.length, "\u6761"));
+              return {
+                  adding: adding,
+                  updating: {
+                      old: updatingOldRows,
+                      new: updatingRows
+                  },
+                  tableName: tableName
+              };
+          });
+          var tips = false;
+          changed.forEach(function (c) {
+              printLog(fsig, "\u6267\u884C\u62C6\u5206\uFF0C".concat(table.name, "->").concat(c.tableName, "\uFF0C \u65B0\u589E=").concat(c.adding.length, "\uFF0C\u66F4\u65B0=").concat(c.updating.new.length));
+              if (!confirm("\u672C\u6B21\u62C6\u5206\uFF1A".concat(table.name, "->").concat(c.tableName, "\uFF0C \u65B0\u589E=").concat(c.adding.length, "\uFF0C\u66F4\u65B0=").concat(c.updating.new.length, "\uFF0C\u662F\u5426\u7EE7\u7EED\uFF1F"))) {
+                  alert("\u62C6\u5206\u4EFB\u52A1".concat(table.name, "->").concat(c.tableName, "\u5DF2\u53D6\u6D88"));
+                  return;
+              }
+              if (c.updating.new.length > 0) {
+                  printLog(fsig, "\u66F4\u65B0\u65E2\u6709\u6570\u636E\u2026\u2026");
+                  base.modifyRows(c.tableName, c.updating.old, c.updating.new);
+                  printLog(fsig, "\u65E2\u6709\u6570\u636E\u66F4\u65B0\u5B8C\u6210");
+              }
+              if (c.adding.length > 0) {
+                  printLog(fsig, "\u6267\u884C\u65B0\u589E\u6570\u636E\u2026\u2026");
+                  c.adding.forEach(function (r) { return base.addRow(c.tableName, r); });
+                  printLog(fsig, "\u65B0\u589E\u6570\u636E\u5B8C\u6210");
+              }
+              printLog(fsig, "\u62C6\u5206\u4EFB\u52A1".concat(table.name, "->").concat(c.tableName, "\u5DF2\u5B8C\u6210"));
+              tips = true;
+          });
+          if (tips) {
+              alert('拆分操作已完成');
+          }
+      }
+      return TableSplitter;
+  }());
+
   var TableSelector = (function () {
       function TableSelector(table_name) {
           if (table_name === void 0) { table_name = undefined; }
@@ -401,6 +567,36 @@
           printLog(fsig, "\u76EE\u6807\u8868\uFF1A\u8868\u540D=".concat(this.name, "\uFF0C\u586B\u5145\u5B57\u6BB5=").concat(fill_column, "\uFF0C\u7D22\u5F15\u5B57\u6BB5=").concat(index_column));
           printLog(fsig, "\u6570\u636E\u6E90\uFF1A\u8868\u540D=".concat(sourceTableName, "\uFF0C\u6570\u636E\u5B57\u6BB5=").concat(result_column, "\uFF0C\u7D22\u5F15\u5B57\u6BB5=").concat(sourceColumnName));
           base.utils.lookupAndCopy(this.name, fill_column, index_column, sourceTableName, result_column, sourceColumnName);
+      };
+      TableSelector.prototype.mergeBy = function (index_column, subtables, duplicate_rows, exists_row) {
+          if (duplicate_rows === void 0) { duplicate_rows = "first"; }
+          if (exists_row === void 0) { exists_row = "skip"; }
+          return new TableMerger(this, index_column, subtables, duplicate_rows, exists_row);
+      };
+      TableSelector.prototype.splitTo = function (items, index_column, exists_row) {
+          if (exists_row === void 0) { exists_row = "skip"; }
+          return new TableSplitter(this, items, index_column, exists_row);
+      };
+      TableSelector.prototype.canAssignTo = function (table_name) {
+          var my_columns = base.getColumns(this.name);
+          var other_columns = base.getColumns(table_name);
+          var _loop_1 = function (mycol) {
+              var name = mycol.name, type = mycol.type;
+              var othercols = other_columns.filter(function (c) { return c['name'] == name; });
+              if (!othercols || othercols.length == 0) {
+                  return { value: die("\u5B57\u6BB5".concat(name, "\u5728").concat(table_name, "\u8868\u4E0D\u5B58\u5728")) };
+              }
+              var othercol = othercols[0];
+              if (othercol['type'] != type) {
+                  return { value: die("\u5B57\u6BB5".concat(name, "\u7684\u7C7B\u578B\u4E0E").concat(table_name, "\u8868\u4E0D\u4E00\u81F4")) };
+              }
+          };
+          for (var _i = 0, my_columns_1 = my_columns; _i < my_columns_1.length; _i++) {
+              var mycol = my_columns_1[_i];
+              var state_1 = _loop_1(mycol);
+              if (typeof state_1 === "object")
+                  return state_1.value;
+          }
       };
       return TableSelector;
   }());

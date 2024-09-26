@@ -1,8 +1,8 @@
-[**extjss v1.1.0**](../../README.md) • **Docs**
+[**extjss v1.2.0**](../../README.md) • **Docs**
 
 ***
 
-[extjss v1.1.0](../../modules.md) / [rows](../README.md) / RowsFilter
+[extjss v1.2.0](../../modules.md) / [rows](../README.md) / RowsFilter
 
 # 类: RowsFilter
 
@@ -30,7 +30,7 @@
 
 > **view**: [`ViewSelector`](../../view/classes/ViewSelector.md)
 
-所属的视图选择器
+视图选择器
 
 ## 方法
 
